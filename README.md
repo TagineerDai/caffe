@@ -1,45 +1,128 @@
-# Caffe
+# Official `BLAS/caffe:master` Installation
+For DEMO [FCN@ucb](https://github.com/shelhamer/fcn.berkeleyvision.org).
 
-[![Build Status](https://travis-ci.org/BVLC/caffe.svg?branch=master)](https://travis-ci.org/BVLC/caffe)
-[![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
+prereq  
+```
+$ sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler
+$ sudo apt-get install --no-install-recommends libboost-all-dev
+```
+make  
+```
+$ cp Makefile.config.example Makefile.config
+$ vim Makefile.config
+...
+$ make -j< number of cores * 2 >
+```
 
-Caffe is a deep learning framework made with expression, speed, and modularity in mind.
-It is developed by Berkeley AI Research ([BAIR](http://bair.berkeley.edu))/The Berkeley Vision and Learning Center (BVLC) and community contributors.
+```
+CXX src/caffe/solvers/rmsprop_solver.cpp
+In file included from ./include/caffe/blob.hpp:10:0,
+                 from ./include/caffe/net.hpp:10,
+                 from ./include/caffe/solver.hpp:7,
+                 from ./include/caffe/sgd_solvers.hpp:7,
+                 from src/caffe/solvers/rmsprop_solver.cpp:3:
+./include/caffe/syncedmem.hpp:7:19: fatal error: mkl.h: No such file or directory
+compilation terminated.
+Makefile:581: recipe for target '.build_release/src/caffe/solvers/rmsprop_solver.o' failed
+make: *** [.build_release/src/caffe/solvers/rmsprop_solver.o] Error 1
 
-Check out the [project site](http://caffe.berkeleyvision.org) for all the details like
+```
 
-- [DIY Deep Learning for Vision with Caffe](https://docs.google.com/presentation/d/1UeKXVgRvvxg9OUdh_UiC5G71UMscNPlvArsWER41PsU/edit#slide=id.p)
-- [Tutorial Documentation](http://caffe.berkeleyvision.org/tutorial/)
-- [BAIR reference models](http://caffe.berkeleyvision.org/model_zoo.html) and the [community model zoo](https://github.com/BVLC/caffe/wiki/Model-Zoo)
-- [Installation instructions](http://caffe.berkeleyvision.org/installation.html)
+Install ATLAS or OpenBLAS  
+ATLAS for **with CUDA installation**, OpenBLAS for **CPU only installation**.  
+```
+sudo apt-get install libatlas-base-dev
+sudo apt-get install libopenblas-base
+```
 
-and step-by-step examples.
+```
+In file included from src/caffe/solvers/sgd_solver.cpp:5:0:
+./include/caffe/util/hdf5.hpp:6:18: fatal error: hdf5.h: No such file or directory
+compilation terminated.
+Makefile:581: recipe for target '.build_release/src/caffe/solvers/sgd_solver.o' failed
+make: *** [.build_release/src/caffe/solvers/sgd_solver.o] Error 1
 
-## Custom distributions
+```  
 
- - [Intel Caffe](https://github.com/BVLC/caffe/tree/intel) (Optimized for CPU and support for multi-node), in particular Xeon processors (HSW, BDW, SKX, Xeon Phi).
-- [OpenCL Caffe](https://github.com/BVLC/caffe/tree/opencl) e.g. for AMD or Intel devices.
-- [Windows Caffe](https://github.com/BVLC/caffe/tree/windows)
+Change `NCLUDE_DIRS := $(PYTHON_INCLUDE) /usr/local/include` to `INCLUDE_DIRS := $(PYTHON_INCLUDE) /usr/local/include /usr/include/hdf5/serial/` in `Makefile.config` accroding to [this page](https://github.com/BVLC/caffe/issues/2347).
 
-## Community
+```
+CXX src/caffe/util/upgrade_proto.cpp
+In file included from src/caffe/util/db.cpp:3:0:
+./include/caffe/util/db_lmdb.hpp:8:18: fatal error: lmdb.h: No such file or directory
+compilation terminated.
+Makefile:581: recipe for target '.build_release/src/caffe/util/db.o' failed
+make: *** [.build_release/src/caffe/util/db.o] Error 1
 
-[![Join the chat at https://gitter.im/BVLC/caffe](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/BVLC/caffe?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+```
 
-Please join the [caffe-users group](https://groups.google.com/forum/#!forum/caffe-users) or [gitter chat](https://gitter.im/BVLC/caffe) to ask questions and talk about methods and models.
-Framework development discussions and thorough bug reports are collected on [Issues](https://github.com/BVLC/caffe/issues).
+Install LMDB  
+```
+$ sudo apt-get install liblmdb-dev
+```  
 
-Happy brewing!
+```
+LD -o .build_release/lib/libcaffe.so.1.0.0
+/usr/bin/ld: cannot find -lgflags
+/usr/bin/ld: cannot find -lhdf5_hl
+/usr/bin/ld: cannot find -lhdf5
+collect2: error: ld returned 1 exit status
+Makefile:572: recipe for target '.build_release/lib/libcaffe.so.1.0.0' failed
+make: *** [.build_release/lib/libcaffe.so.1.0.0] Error 1
+```
 
-## License and Citation
+```
+$ sudo apt-get install libgflags-dev
+```
+Change `LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib` to `LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu/hdf5/serial/` in `Makefile.config` accroding to [this page](https://github.com/BVLC/caffe/issues/4333).  
 
-Caffe is released under the [BSD 2-Clause license](https://github.com/BVLC/caffe/blob/master/LICENSE).
-The BAIR/BVLC reference models are released for unrestricted use.
+```
+CXX/LD -o .build_release/tools/upgrade_net_proto_binary.bin
+.build_release/lib/libcaffe.so: undefined reference to `cv::imread(cv::String const&, int)'
+.build_release/lib/libcaffe.so: undefined reference to `cv::imencode(cv::String const&, cv::_InputArray const&, std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<int, std::allocator<int> > const&)'
+.build_release/lib/libcaffe.so: undefined reference to `cv::imdecode(cv::_InputArray const&, int)'
+collect2: error: ld returned 1 exit status
+Makefile:625: recipe for target '.build_release/tools/upgrade_net_proto_binary.bin' failed
+make: *** [.build_release/tools/upgrade_net_proto_binary.bin] Error 1
+```
 
-Please cite Caffe in your publications if it helps your research:
+change OpenCV version to 3 accroding to [this page](https://github.com/BVLC/caffe/issues/3700).
 
-    @article{jia2014caffe,
-      Author = {Jia, Yangqing and Shelhamer, Evan and Donahue, Jeff and Karayev, Sergey and Long, Jonathan and Girshick, Ross and Guadarrama, Sergio and Darrell, Trevor},
-      Journal = {arXiv preprint arXiv:1408.5093},
-      Title = {Caffe: Convolutional Architecture for Fast Feature Embedding},
-      Year = {2014}
-    }
+```
+CXX/LD -o .build_release/tools/compute_image_mean.bin
+.build_release/tools/compute_image_mean.o: In function `_GLOBAL__sub_I_compute_image_mean.cpp':
+compute_image_mean.cpp:(.text.startup+0x16d): undefined reference to `google::FlagRegisterer::FlagRegisterer<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(char const*, char const*, char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*)'
+collect2: error: ld returned 1 exit status
+Makefile:625: recipe for target '.build_release/tools/compute_image_mean.bin' failed
+make: *** [.build_release/tools/compute_image_mean.bin] Error 1
+```
+
+```
+$ sudo -i
+# cd /dir to this caffe/python
+# for req in $(cat requirements.txt); do pip install $req; done
+# exit
+$ cd ..
+$ make pycaffe:
+```
+
+Re-install gflags and glog from official source accroding to [this page](https://github.com/google/glog/issues/140) and [this install guidance](https://github.com/gflags/gflags/blob/master/INSTALL.md).
+
+```
+cd repos
+mkdir glog 
+git clone https://github.com/google/glog
+cd glog
+./autogen.sh && ./configure && make && make install
+```
+
+### Reference
+1. http://caffe.berkeleyvision.org/install_apt.html
+2. http://caffe.berkeleyvision.org/installation.html#compilation
+3. http://yufeigan.github.io/2014/12/14/Caffe%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B04-caffe%E5%AE%89%E8%A3%85%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E7%9A%84libraries/
+4. https://github.com/BVLC/caffe/issues/2347
+5. https://github.com/BVLC/caffe/issues/4333
+6. https://github.com/google/glog
+
+
+
